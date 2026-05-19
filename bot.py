@@ -10,12 +10,20 @@ CHAT_ID = 104815136
 
 async def get_fact():
     async with httpx.AsyncClient() as client:
+        # Получаем факт
         response = await client.get(
             "https://uselessfacts.jsph.pl/api/v2/facts/random",
             params={"language": "en"}
         )
-        data = response.json()
-        return data["text"]
+        fact = response.json()["text"]
+        
+        # Переводим на русский
+        translate = await client.get(
+            "https://api.mymemory.translated.net/get",
+            params={"q": fact, "langpair": "en|ru"}
+        )
+        translated = translate.json()["responseData"]["translatedText"]
+        return translated
 
 async def send_daily_fact():
     bot = Bot(token=TOKEN)
@@ -25,26 +33,3 @@ async def send_daily_fact():
     await bot.send_message(
         chat_id=CHAT_ID,
         text=f"🧠 Факт дня:\n\n{fact}"
-    )
-    
-    while True:
-        now = datetime.now(pytz.timezone("Europe/Moscow"))
-        
-        random_hour = random.randint(9, 23)
-        random_minute = random.randint(0, 59)
-        
-        target = now.replace(hour=random_hour, minute=random_minute, second=0, microsecond=0)
-        if target <= now:
-            target = target + timedelta(days=1)
-        
-        wait_seconds = (target - now).total_seconds()
-        await asyncio.sleep(wait_seconds)
-        
-        fact = await get_fact()
-        await bot.send_message(
-            chat_id=CHAT_ID,
-            text=f"🧠 Факт дня:\n\n{fact}"
-        )
-
-if __name__ == "__main__":
-    asyncio.run(send_daily_fact())
