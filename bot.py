@@ -19,6 +19,14 @@ async def get_fact():
 
 async def send_daily_fact():
     bot = Bot(token=TOKEN)
+    
+    # Отправляем факт сразу при запуске
+    fact = await get_fact()
+    await bot.send_message(
+        chat_id=CHAT_ID,
+        text=f"🧠 Факт дня:\n\n{fact}"
+    )
+    
     while True:
         now = datetime.now(pytz.timezone("Europe/Moscow"))
         
